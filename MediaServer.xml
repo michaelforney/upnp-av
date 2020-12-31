@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+	<specVersion>
+		<major>1</major>
+		<minor>0</minor>
+	</specVersion>
+	<device>
+		<deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+		<friendlyName>upnp-av</friendlyName>
+		<manufacturer>upnp-av developers</manufacturer>
+		<modelName>upnp-av</modelName>
+		<modelNumber>0.0</modelNumber>
+		<modelURL>https://git.sr.ht/~mcf/upnp-av</modelURL>
+		<UDN>uuid:00000000-0000-0000-0000-000000000000</UDN>
+		<serviceList>
+			<service>
+				<serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+				<serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+				<SCPDURL>/ContentDirectory.xml</SCPDURL>
+				<controlURL>/control</controlURL>
+				<eventSubURL></eventSubURL>
+			</service>
+		</serviceList>
+	</device>
+</root>
