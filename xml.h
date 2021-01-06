@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: ISC */
+/* http://git.codemadness.org/xmlparser/file/README.html */
 #ifndef _XML_H_
 #define _XML_H_
 

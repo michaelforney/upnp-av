@@ -1,4 +1,6 @@
 Copyright (c) 2020-2021 Michael Forney
+
+xml.c and xml.h are
 Copyright (c) 2011-2020 Hiltjo Posthuma <hiltjo@codemadness.org>
 
 Permission to use, copy, modify, and/or distribute this software for any

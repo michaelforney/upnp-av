@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: ISC */
+/* http://git.codemadness.org/xmlparser/file/README.html */
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
