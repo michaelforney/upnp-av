@@ -1,6 +1,6 @@
 ## upnp-av
 
-upnp-av is a server implementing a minimal UPnP MediaServer device.
+upnp-av is a server implementing a minimal [UPnP MediaServer] device.
 It presents the contents of a local directory as a [UPnP
 ContentDirectory], enabling other devices on the network (such as
 smart TVs) to browse the media files it contains. The files themselves
