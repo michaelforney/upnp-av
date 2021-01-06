@@ -60,24 +60,6 @@ ssdp_open(const struct ssdp_device *ssdp)
 	int sock, opt;
 	size_t i;
 
-#if 0
-	char soap_addr_str[INET_ADDRSTRLEN];
-	socklen_t soap_addr_len;
-	soap_addr_len = sizeof(soap_addr);
-	if (getsockname(soap_sock, (struct sockaddr *)&soap_addr, &soap_addr_len) != 0) {
-		perror("getsockname");
-		return -1;
-	}
-	if (!inet_ntop(soap_addr.sin_family, &soap_addr.sin_addr, soap_addr_str, sizeof(soap_addr_str))) {
-		perror("inet_ntop");
-		return -1 ;
-	}
-	ret = snprintf(location, sizeof(location), "http://%s:%d/MediaServer.xml", soap_addr_str, ntohs(soap_addr.sin_port));
-	if (ret < 0 || ret >= sizeof(location)) {
-		fprintf(stderr, "server location is too long\n");
-		return -1;
-	}
-#endif
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
 		perror("socket");
