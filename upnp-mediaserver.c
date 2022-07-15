@@ -105,12 +105,21 @@ static const char soap_suffix[] =
 	"</s:Envelope>";
 static const struct filetype filetypes[] = {
 	{"", "application/octet-stream", "object.item"},
+
+	/* audio */
 	{"flac", "audio/flac", "object.item.audioItem"},
-	{"wav", "audio/wav", "object.item.audioItem"},
-	{"mkv", "video/x-matroska", "object.item.videoItem"},
-	{"mp4", "video/mp4", "object.item.videoItem"},
 	{"mp3", "audio/mpeg", "object.item.audioItem"},
+	{"ogg", "audio/ogg", "object.item.audioItem"},
+	{"opus", "audio/opus", "object.item.audioItem"},
+	{"wav", "audio/wav", "object.item.audioItem"},
+
+	/* video */
+	{"mp4", "video/mp4", "object.item.videoItem"},
+	{"mkv", "video/x-matroska", "object.item.videoItem"},
 	{"mov", "video/quicktime", "object.item.videoItem"},
+	{"webm", "video/webm", "object.item.videoItem"},
+
+	/* image */
 	{"jpg", "image/jpeg", "object.item.imageItem"},
 	{"png", "image/png", "object.item.imageItem"},
 };
