@@ -39,7 +39,7 @@ struct xmltag {
 
 		TAG_ENVELOPE,
 		TAG_BODY,
-	
+
 		TAG_BROWSE,
 		TAG_OBJECTID,
 		TAG_BROWSEFLAG,
@@ -112,6 +112,8 @@ static const struct filetype filetypes[] = {
 	{"ogg", "audio/ogg", "object.item.audioItem"},
 	{"opus", "audio/opus", "object.item.audioItem"},
 	{"wav", "audio/wav", "object.item.audioItem"},
+	{"dff", "audio/x-dff", "object.item.audioItem"},
+	{"dsf", "audio/x-dsf", "object.item.audioItem"},
 
 	/* video */
 	{"mp4", "video/mp4", "object.item.videoItem"},
@@ -165,7 +167,7 @@ soap_fault(struct client *c, int code, const char *fmt, ...)
 		"</detail>"
 		"</s:Fault>";
 	va_list ap;
-		
+
 	c->fault = 1;
 	fwrite(soap_prefix, 1, sizeof(soap_prefix) - 1, c->body);
 	fwrite(fault_prefix, 1, sizeof(fault_prefix) - 1, c->body);
@@ -441,6 +443,25 @@ write_object(struct client *c, const char *path, const char *title, const char *
 	}
 }
 
+struct media_entry {
+	char title[NAME_MAX];
+	char path[PATH_MAX];
+	char id[PATH_MAX];
+};
+
+static int
+cmpstringp(const void *p1, const void *p2)
+{
+	return strcmp(((const struct media_entry *)p1)->title, ((const struct media_entry*)p2)->title);
+}
+
+static void
+sort_paths(struct media_entry* entries, size_t count)
+{
+	qsort(entries, count, sizeof *entries, cmpstringp);
+}
+
+
 static void
 browse(struct client *c, const char *id, size_t starting_index, size_t requested_count)
 {
@@ -456,9 +477,10 @@ browse(struct client *c, const char *id, size_t starting_index, size_t requested
 	char path[PATH_MAX], id_buf[PATH_MAX], *title, *path_end, *parent_id_end, *id_end;
 	const char *parent_id;
 	int parent_id_len;
-	DIR *dir;
+	DIR *dir = NULL;
 	struct dirent *d;
-	size_t total_matches, number_returned;
+	size_t total_matches = 0, number_returned = 0, total_paths = 0, processed_paths = 0, idx;
+	struct media_entry *paths = NULL;
 
 	fwrite(soap_prefix, 1, sizeof(soap_prefix) - 1, c->body);
 
@@ -470,8 +492,6 @@ browse(struct client *c, const char *id, size_t starting_index, size_t requested
 	}
 	fprintf(stderr, "[SOAP] Browse(\"%s\", %zu, %zu)\n", id, starting_index, requested_count);
 	fwrite(prefix, 1, sizeof(prefix) - 1, c->body);
-	number_returned = 0;
-	total_matches = 0;
 	switch (c->u.browse.browse_flag) {
 	case BROWSE_METADATA:
 		for (title = path_end; title > path; --title) {
@@ -482,7 +502,7 @@ browse(struct client *c, const char *id, size_t starting_index, size_t requested
 		if (parent_id_end) {
 			parent_id = id;
 			if (parent_id_end - id > INT_MAX)
-				return;
+				goto fail;
 			parent_id_len = parent_id_end - id;
 		} else if (strcmp(id, "0") == 0) {
 			parent_id = "-1";
@@ -503,35 +523,58 @@ browse(struct client *c, const char *id, size_t starting_index, size_t requested
 		} else {
 			id_end = memccpy(id_buf, id, '\0', sizeof(id_buf));
 			if (!id_end)
-				return;
+				goto fail;
 			id_end[-1] = '/';
 			parent_id_len = id_end - id_buf - 1;
 		}
 		dir = opendir(path);
 		if (!dir)
-			return;
+			goto fail;
 		if (path_end != path)
 			*path_end++ = '/';
+
+		while (readdir(dir))
+		  ++total_paths;
+
+		paths = malloc(total_paths * sizeof *paths);
+		if(!paths)
+		  goto fail;
+
+		rewinddir(dir);
 		while ((d = readdir(dir))) {
 			if (d->d_name[0] == '.' && (!d->d_name[1] || (d->d_name[1] == '.' && !d->d_name[2])))
 				continue;
 			++total_matches;
-			if (starting_index > 0) {
+
+			if (!memccpy(path_end, d->d_name, '\0', sizeof(path) - (path_end - path)))
+				goto fail;
+
+			if (!url_escape(id_end, sizeof(id_buf) - (id_end - id_buf), d->d_name))
+				goto fail;
+
+			memccpy(paths[processed_paths].title, d->d_name, '\0', NAME_MAX);
+			memccpy(paths[processed_paths].id, id_buf, '\0', PATH_MAX);
+			memccpy(paths[processed_paths].path, path, '\0', PATH_MAX);
+
+			++processed_paths;
+		}
+
+		sort_paths(paths, processed_paths);
+
+		for(idx = 0; idx < processed_paths ; ++idx) {
+		  if (starting_index > 0) {
 				--starting_index;
 				continue;
 			}
 			if (requested_count > 0 && number_returned == requested_count)
-				continue;
-			if (!memccpy(path_end, d->d_name, '\0', sizeof(path) - (path_end - path)))
-				return;
-			if (!url_escape(id_end, sizeof(id_buf) - (id_end - id_buf), d->d_name))
-				return;
-			write_object(c, path, d->d_name, id_buf, parent_id, parent_id_len);
+			   continue;
+
+			write_object(c, paths[idx].path, paths[idx].title, paths[idx].id, parent_id, parent_id_len);
 			++number_returned;
 		}
-		closedir(dir);
 		break;
 	}
+
 	fwrite(suffix, 1, sizeof(suffix) - 1, c->body);
 	fprintf(c->body,
 		"<NumberReturned>%zu</NumberReturned>"
@@ -540,6 +583,10 @@ browse(struct client *c, const char *id, size_t starting_index, size_t requested
 		"</u:BrowseResponse>",
 		number_returned, total_matches);
 	fwrite(soap_suffix, 1, sizeof(soap_suffix) - 1, c->body);
+
+fail:
+	closedir(dir);
+	free(paths);
 }
 
 static void
