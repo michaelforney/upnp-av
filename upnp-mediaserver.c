@@ -112,6 +112,8 @@ static const struct filetype filetypes[] = {
 	{"ogg", "audio/ogg", "object.item.audioItem"},
 	{"opus", "audio/opus", "object.item.audioItem"},
 	{"wav", "audio/wav", "object.item.audioItem"},
+	{"dff", "audio/x-dff", "object.item.audioItem"},
+	{"dsf", "audio/x-dsf", "object.item.audioItem"},
 
 	/* video */
 	{"mp4", "video/mp4", "object.item.videoItem"},
